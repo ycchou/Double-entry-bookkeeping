@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      /* --- 基礎設定 --- */
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; margin: 0; }
+      .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+      
+      h2, h3 { color: #2c3e50; }
+      h2 { text-align: center; margin-top: 0; font-size: 1.5rem; }
+      h3 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px; color: #1565c0; font-size: 1.1rem; }
+      
+      /* --- 導航列 --- */
+      .nav-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #ddd; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .nav-item { padding: 12px 20px; cursor: pointer; font-weight: bold; color: #666; white-space: nowrap; transition: 0.2s; border-bottom: 3px solid transparent; }
+      .nav-item:hover { background-color: #f9f9f9; }
+      .nav-item.active { border-bottom: 3px solid #2196F3; color: #2196F3; }
+      
+      .tab-content { display: none; animation: fadeIn 0.3s; }
+      .tab-content.active { display: block; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+      /* --- 表單區域 --- */
+      .form-header { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; margin-bottom: 20px; }
+      .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+      .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
+      
+      /* --- 搜尋列 --- */
+      .search-bar { background: #e3f2fd; padding: 15px; border-radius: 6px; display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+      .search-item { flex: 1; min-width: 150px; }
+      .search-item label { display: block; font-weight: bold; font-size: 0.85em; margin-bottom: 5px; color: #1565c0; }
+      
+      /* --- 表格與列表 --- */
+      table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+      th { background-color: #2c3e50; color: white; padding: 10px; text-align: center; font-size: 0.9em; border: 1px solid #34495e; }
+      td { padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9em; border: 1px solid #eee; vertical-align: middle; }
+      .v-divider { border-right: 2px solid #ddd; }
+      
+      input.amount { text-align: right; width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+      select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+      .text-right { text-align: right; }
+
+      /* --- 按鈕 --- */
+      .btn { padding: 10px 15px; border: none; cursor: pointer; border-radius: 4px; color: white; font-size: 0.9em; transition: 0.2s; display: inline-block; text-align: center; }
+      .btn:hover { opacity: 0.9; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+      .btn:disabled { background-color: #ccc; cursor: not-allowed; opacity: 1; box-shadow: none; }
+      
+      .btn-add { background-color: #2196F3; }
+      .btn-search { background-color: #1565c0; width: 100%; }
+      .btn-submit { background-color: #4CAF50; width: 100%; font-size: 1.1em; margin-top: 15px; padding: 12px; }
+      .btn-update { background-color: #FF9800; width: 100%; font-size: 1.1em; margin-top: 15px; padding: 12px; }
+      .btn-cancel { background-color: #9E9E9E; width: 100%; margin-top: 10px; padding: 10px; }
+      .btn-remove { background-color: #ef5350; color: white; width: 30px; height: 30px; border-radius: 50%; padding: 0; line-height: 30px; }
+      
+      .btn-edit { background-color: #FF9800; margin-right: 5px; }
+      .btn-delete { background-color: #c62828; } 
+      .btn-refresh { background-color: #607d8b; }
+      
+      /* 下載按鈕 */
+      .btn-download { background-color: #2e7d32; width: 100%; }
+
+      /* 垃圾桶專用按鈕 */
+      .btn-restore { background-color: #4CAF50; margin-right: 5px; }
+      .btn-hard-delete { background-color: #333; }
+
+      /* --- 卡片式列表 (發票卡片) --- */
+      .invoice-card { border: 1px solid #ddd; border-radius: 6px; margin-bottom: 15px; padding: 15px; background: #fff; border-left: 5px solid #2196F3; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+      .invoice-card.deleted { border-left-color: #c62828; background-color: #fff5f5; }
+      
+      .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+      .invoice-info { flex: 1; }
+      .invoice-info h4 { margin: 0 0 5px 0; font-size: 1.1em; color: #333; }
+      .invoice-meta { color: #666; font-size: 0.9em; }
+      .invoice-actions { display: flex; gap: 5px; }
+      
+      .details-table { width: 100%; margin-top: 10px; background: #fafafa; border-radius: 4px; overflow: hidden; }
+      .details-table th { background: #eee; color: #555; border: none; text-align: left; }
+      
+      /* --- 統計與訊息 --- */
+      .totals { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 4px; border: 1px solid #eee; }
+      .totals div { font-size: 1rem; font-weight: bold; }
+      
+      .msg-box { text-align: center; margin-top: 10px; display: none; padding: 15px; border-radius: 4px; font-weight: bold; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.2); min-width: 300px; }
+      
+      /* --- 報表控制區 --- */
+      .report-controls { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; background: #e3f2fd; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+      .control-group { display: flex; align-items: center; gap: 10px; }
+      .indent { padding-left: 20px; color: #555; }
+      .indent-2 { padding-left: 40px; color: #777; }
+      .total-row { font-weight: bold; background-color: #e3f2fd; }
+      .subtotal-row { font-weight: bold; background-color: #f5f5f5; }
+
+      /* =========================================
+         RWD 手機版適配 (Max Width 768px)
+         ========================================= */
+      @media screen and (max-width: 768px) {
+        body { padding: 10px; }
+        .container { padding: 10px; }
+        
+        /* 1. 表單標頭垂直堆疊 */
+        .form-header { grid-template-columns: 1fr; gap: 10px; }
+        
+        /* 2. 隱藏原有的 Table Header */
+        #linesTable thead { display: none; }
+        
+        /* 3. 將 Table Row 轉為卡片 */
+        #linesTable tbody tr {
+          display: block;
+          margin-bottom: 15px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 15px;
+          background: #fff;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          position: relative;
+        }
+
+        /* 4. 將 Table Cell 轉為區塊 */
+        #linesTable td {
+          display: block;
+          border: none;
+          padding: 5px 0;
+          text-align: left;
+        }
+        
+        /* 移除分隔線 td 的樣式 */
+        #linesTable td.v-divider { border: none; }
+        
+        /* 5. 調整輸入框與選單寬度 */
+        #linesTable select, 
+        #linesTable input.amount { 
+          width: 100%; 
+          font-size: 16px; 
+        }
+
+        /* 6. 為手機版添加欄位標籤 */
+        #linesTable td:nth-child(1)::before { content: "借方科目"; display: block; font-size: 0.8em; color: #888; margin-bottom: 2px; }
+        #linesTable td:nth-child(2)::before { content: "借方金額"; display: block; font-size: 0.8em; color: #888; margin-bottom: 2px; }
+        #linesTable td:nth-child(3)::before { content: "貸方科目"; display: block; font-size: 0.8em; color: #888; margin-bottom: 2px; }
+        #linesTable td:nth-child(4)::before { content: "貸方金額"; display: block; font-size: 0.8em; color: #888; margin-bottom: 2px; }
+
+        #linesTable td:last-child { text-align: right; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        
+        /* 7. 發票列表在手機上的優化 */
+        .invoice-header { flex-direction: column; }
+        .invoice-actions { width: 100%; justify-content: flex-end; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        
+        /* 8. 報表表格優化 */
+        .text-right { text-align: left; }
+        .report-controls { flex-direction: column; align-items: stretch; }
+        
+        /* 9. 搜尋列垂直堆疊 */
+        .search-bar { flex-direction: column; align-items: stretch; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- 導航列 -->
+      <div class="nav-tabs">
+        <div class="nav-item active" onclick="switchTab('entry')">📝 發票登錄</div>
+        <div class="nav-item" onclick="switchTab('list')">🔍 查詢</div>
+        <div class="nav-item" onclick="switchTab('report')">📊 報表</div>
+        <div class="nav-item" onclick="switchTab('trash')" style="color: #c62828;">🗑️ 垃圾桶</div>
+      </div>
+
+      <!-- 1. 發票登錄 (Entry) -->
+      <div id="tab-entry" class="tab-content active">
+        <h2 id="formTitle">新增發票/單據</h2>
+        <div class="form-header">
+          <div class="form-group"><label>📅 日期</label><input type="date" id="entryDate"></div>
+          <div class="form-group"><label>📝 摘要/品項</label><input type="text" id="entryDesc" placeholder="例如：銷售商品、支付水電費"></div>
+          <div class="form-group"><label>🔖 單號 (選填)</label><input type="text" id="entryRef" placeholder="例如：INV-2023001"></div>
+        </div>
+        
+        <table id="linesTable">
+          <thead>
+            <tr>
+              <th width="35%">借方科目 (Debit)</th>
+              <th width="15%" class="v-divider">借方金額</th>
+              <th width="35%">貸方科目 (Credit)</th>
+              <th width="15%">貸方金額</th>
+              <th width="5%"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button class="btn btn-add" onclick="addSplitLine()" style="width:100%">+ 新增分錄行</button>
+
+        <div class="totals">
+          <div>借方總計: <span id="totalDebit">0</span></div>
+          <div>貸方總計: <span id="totalCredit">0</span></div>
+          <div id="balanceStatus" style="color: green;">(平衡)</div>
+        </div>
+        
+        <button class="btn btn-submit" id="submitBtn" onclick="submitForm()">💾 儲存發票</button>
+        <div id="editButtons" style="display:none;">
+          <button class="btn btn-update" id="updateBtn" onclick="updateForm()">✅ 確認修改</button>
+          <button class="btn btn-cancel" onclick="cancelEdit()">❌ 取消編輯</button>
+        </div>
+      </div>
+
+      <!-- 2. 發票查詢 (List) -->
+      <div id="tab-list" class="tab-content">
+        <h2>發票查詢</h2>
+        <div class="search-bar">
+          <div class="search-item"><label>開始日期</label><input type="date" id="searchStart"></div>
+          <div class="search-item"><label>結束日期</label><input type="date" id="searchEnd"></div>
+          <div class="search-item"><label>&nbsp;</label><button class="btn btn-search" onclick="loadInvoices()">🔍 搜尋</button></div>
+          <div class="search-item"><label>&nbsp;</label><button class="btn btn-download" id="btnDlInv" onclick="downloadInvoiceExcel()">📥 下載 Excel</button></div>
+        </div>
+        <div id="invoiceList">請選擇日期範圍並點擊搜尋...</div>
+      </div>
+
+      <!-- 3. 財務報表 (Report) -->
+      <div id="tab-report" class="tab-content">
+        <h2>財務報表</h2>
+        <div class="report-controls">
+          <div class="control-group">
+            <label><b>模式：</b></label>
+            <label><input type="radio" name="reportMode" value="year" onchange="toggleReportMode()" checked> 年度</label>
+            <label><input type="radio" name="reportMode" value="month" onchange="toggleReportMode()"> 月份</label>
+          </div>
+          <div class="control-group" id="yearSelector">
+            <label>年度：</label>
+            <select id="selYear" onchange="loadFinancials()" style="padding:5px;"></select>
+          </div>
+          <div class="control-group" id="monthSelector" style="display:none;">
+            <label>月份：</label>
+            <input type="month" id="selMonth" onchange="loadFinancials()" style="padding:5px;">
+          </div>
+          <button class="btn btn-refresh" onclick="loadFinancials()">↻ 刷新</button>
+          <button class="btn btn-download" id="btnDlRep" onclick="downloadReportExcel()">📥 下載 Excel</button>
+        </div>
+        
+        <h3>1. 綜合損益表</h3>
+        <table id="incomeTable"><thead><tr><th>科目</th><th class="text-right">金額</th></tr></thead><tbody></tbody></table>
+        <h3>2. 所有者權益變動表</h3>
+        <table id="equityTable"><thead><tr><th>項目</th><th class="text-right">金額</th></tr></thead><tbody></tbody></table>
+        <h3>3. 現金流量表 (間接法)</h3>
+        <table id="cfTable"><thead><tr><th>項目</th><th class="text-right">金額</th></tr></thead><tbody></tbody></table>
+        <h3>4. 資產負債表</h3>
+        <table id="balanceSheetTable"><thead><tr><th>科目</th><th class="text-right">金額</th></tr></thead><tbody></tbody></table>
+      </div>
+      
+      <!-- 4. 垃圾桶 (Trash) -->
+      <div id="tab-trash" class="tab-content">
+        <h2 style="color:#c62828">🗑️ 垃圾桶 (已刪除發票)</h2>
+        <p style="text-align:center; color:#666; font-size:0.9em;">這裡顯示所有被「軟刪除」的發票。您可以還原它們，或選擇永久刪除。</p>
+        <button class="btn btn-refresh" onclick="loadTrash()" style="width:100%; margin-bottom:15px;">↻ 刷新垃圾桶</button>
+        <div id="trashList">載入中...</div>
+      </div>
+    </div>
+
+    <!-- 訊息提示框 -->
+    <div id="msgBox" class="msg-box"></div>
+
+    <script>
+      let debitOptions = [], creditOptions = [], allAccountMap = {}, currentEditingId = null;
+
+      window.onload = function() {
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        const mStr = (today.getMonth()+1).toString().padStart(2, '0');
+        
+        document.getElementById('entryDate').value = dateStr;
+        document.getElementById('searchEnd').value = dateStr;
+        document.getElementById('searchStart').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        document.getElementById('selMonth').value = `${today.getFullYear()}-${mStr}`;
+
+        const yearSel = document.getElementById('selYear');
+        const cy = today.getFullYear();
+        for(let y=cy-2; y<=cy+2; y++) {
+          const opt = document.createElement('option'); opt.value = y; opt.text = y + '年'; if(y===cy) opt.selected = true; yearSel.add(opt);
+        }
+
+        google.script.run.withSuccessHandler(accts => {
+          debitOptions = accts.map(a => `<option value="${a.code}">${a.code} ${a.name}</option>`);
+          creditOptions = accts.map(a => `<option value="${a.code}">${a.code} ${a.name}</option>`);
+          accts.forEach(a => allAccountMap[a.code] = a.name);
+          addSplitLine(); 
+        }).getAccountsList();
+      };
+
+      function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        const navItems = document.querySelectorAll('.nav-item');
+        if(tab === 'entry') navItems[0].classList.add('active');
+        if(tab === 'list') navItems[1].classList.add('active');
+        if(tab === 'report') { navItems[2].classList.add('active'); loadFinancials(); }
+        if(tab === 'trash') { navItems[3].classList.add('active'); loadTrash(); }
+        window.scrollTo(0,0);
+      }
+      
+      function toggleReportMode() {
+        const mode = document.querySelector('input[name="reportMode"]:checked').value;
+        document.getElementById('yearSelector').style.display = mode === 'year' ? 'flex' : 'none';
+        document.getElementById('monthSelector').style.display = mode === 'month' ? 'flex' : 'none';
+        loadFinancials();
+      }
+
+      function addSplitLine(drCode='', drAmt=0, crCode='', crAmt=0) {
+        const row = document.querySelector('#linesTable tbody').insertRow();
+        row.innerHTML = `
+          <td><select class="dr-sel"><option value="">(借方科目)</option>${debitOptions.join('')}</select></td>
+          <td class="v-divider"><input type="number" class="amount debit" value="${drAmt}" placeholder="金額" oninput="calcTotals()"></td>
+          <td><select class="cr-sel"><option value="">(貸方科目)</option>${creditOptions.join('')}</select></td>
+          <td><input type="number" class="amount credit" value="${crAmt}" placeholder="金額" oninput="calcTotals()"></td>
+          <td><button class="btn btn-remove" onclick="this.closest('tr').remove();calcTotals()">✕</button></td>
+        `;
+        if(drCode) row.querySelector('.dr-sel').value = drCode; 
+        if(crCode) row.querySelector('.cr-sel').value = crCode;
+      }
+
+      function calcTotals() {
+        let d=0, c=0; 
+        document.querySelectorAll('.debit').forEach(i=>d+=Number(i.value)); 
+        document.querySelectorAll('.credit').forEach(i=>c+=Number(i.value));
+        document.getElementById('totalDebit').innerText = d.toLocaleString(); 
+        document.getElementById('totalCredit').innerText = c.toLocaleString();
+        const s=document.getElementById('balanceStatus'), btnS=document.getElementById('submitBtn'), btnU=document.getElementById('updateBtn');
+        const isBal = Math.abs(d-c)<0.01 && d>0; 
+        s.innerText = isBal ? '(平衡)' : '(不平衡)'; s.style.color = isBal ? 'green' : 'red'; btnS.disabled = !isBal; btnU.disabled = !isBal;
+      }
+
+      function getFormData() {
+        const data = { date: document.getElementById('entryDate').value, description: document.getElementById('entryDesc').value, reference: document.getElementById('entryRef').value, lines: [] };
+        document.querySelectorAll('#linesTable tbody tr').forEach(r => {
+          const drCode = r.querySelector('.dr-sel').value; const drAmt = Number(r.querySelector('.debit').value);
+          const crCode = r.querySelector('.cr-sel').value; const crAmt = Number(r.querySelector('.credit').value);
+          if(drCode && drAmt > 0) data.lines.push({ accountCode: drCode, debit: drAmt, credit: 0 });
+          if(crCode && crAmt > 0) data.lines.push({ accountCode: crCode, debit: 0, credit: crAmt });
+        }); return data;
+      }
+
+      function submitForm() { 
+        if(!confirm('確定儲存嗎？')) return;
+        const btn=document.getElementById('submitBtn'); btn.disabled=true; btn.innerText='儲存中...'; 
+        google.script.run.withSuccessHandler(()=>{ showMsg('儲存成功！','green'); resetForm(); btn.disabled=false; btn.innerText='💾 儲存發票'; }).saveTransaction(getFormData()); 
+      }
+      function updateForm() { 
+        if(!currentEditingId)return; 
+        const btn=document.getElementById('updateBtn'); btn.disabled=true; btn.innerText='更新中...'; 
+        const d=getFormData(); d.id=currentEditingId; 
+        google.script.run.withSuccessHandler(()=>{ showMsg('更新成功！','green'); resetForm(); cancelEdit(); loadInvoices(); switchTab('list'); }).updateInvoice(d); 
+      }
+      function resetForm() { document.getElementById('entryDesc').value=''; document.getElementById('entryRef').value=''; document.querySelector('#linesTable tbody').innerHTML=''; addSplitLine(); calcTotals(); }
+      function showMsg(txt, color) { const m=document.getElementById('msgBox'); m.innerText=txt; m.style.display='block'; m.style.background=color=='green'?'#e8f5e9':'#ffebee'; m.style.color=color=='green'?'#2e7d32':'#c62828'; setTimeout(()=>{m.style.display='none'}, 3000); }
+
+      function editInvoice(str) {
+        const inv = JSON.parse(decodeURIComponent(str)); currentEditingId = inv.id;
+        document.getElementById('entryDate').value=inv.date; document.getElementById('entryDesc').value=inv.description; document.getElementById('entryRef').value=inv.reference;
+        const tbody = document.querySelector('#linesTable tbody'); tbody.innerHTML = '';
+        const debits = inv.lines.filter(l => l.debit > 0); const credits = inv.lines.filter(l => l.credit > 0);
+        const maxLen = Math.max(debits.length, credits.length);
+        for(let i=0; i<maxLen; i++) { const d = debits[i] || {accountCode:'', debit:0}; const c = credits[i] || {accountCode:'', credit:0}; addSplitLine(d.accountCode, d.debit, c.accountCode, c.credit); }
+        calcTotals(); document.getElementById('formTitle').innerText='編輯發票 ('+inv.date+')'; document.getElementById('submitBtn').style.display='none'; document.getElementById('editButtons').style.display='block'; switchTab('entry'); 
+      }
+      function cancelEdit() { currentEditingId=null; document.getElementById('formTitle').innerText='新增發票/單據'; document.getElementById('submitBtn').style.display='block'; document.getElementById('editButtons').style.display='none'; resetForm(); }
+
+      function loadInvoices() {
+        const s=document.getElementById('searchStart').value, e=document.getElementById('searchEnd').value, div=document.getElementById('invoiceList'); 
+        div.innerHTML='<p style="text-align:center">搜尋中...</p>';
+        google.script.run.withSuccessHandler(data => {
+          if(data.length===0){div.innerHTML='<p style="text-align:center">查無資料</p>';return;}
+          div.innerHTML = renderInvoiceList(data, false);
+        }).getInvoicesByDateRange(s, e);
+      }
+
+      function loadTrash() {
+        const div = document.getElementById('trashList');
+        div.innerHTML = '<p style="text-align:center">載入中...</p>';
+        google.script.run.withSuccessHandler(data => {
+          if(data.length===0){ div.innerHTML='<p style="text-align:center">垃圾桶是空的 👍</p>'; return; }
+          div.innerHTML = renderInvoiceList(data, true);
+        }).getTrashedInvoices();
+      }
+
+      function renderInvoiceList(data, isTrashMode) {
+        return data.map(item => {
+          const str=encodeURIComponent(JSON.stringify(item));
+          let detail = item.lines.map(d => { const name = allAccountMap[d.accountCode] || ''; return `<tr><td>${d.accountCode} ${name}</td><td class="text-right">${d.debit>0?d.debit.toLocaleString():''}</td><td class="text-right">${d.credit>0?d.credit.toLocaleString():''}</td></tr>`; }).join('');
+          let btns = isTrashMode 
+             ? `<button class="btn btn-restore" onclick="restoreInv('${item.id}')">♻️ 還原</button><button class="btn btn-hard-delete" onclick="hardDeleteInv('${item.id}')">☠️ 永久刪除</button>`
+             : `<button class="btn btn-edit" onclick="editInvoice('${str}')">✏️</button><button class="btn btn-delete" onclick="deleteInv('${item.id}')">🗑️</button>`;
+          return `<div class="invoice-card ${isTrashMode?'deleted':''}"><div class="invoice-header"><div class="invoice-info"><h4>${item.date} - ${item.description} <span style="font-size:0.8em;background:#eee;padding:2px 5px;border-radius:4px;">${item.reference||'無單號'}</span></h4><div class="invoice-meta">總額: $${item.total.toLocaleString()}</div></div><div class="invoice-actions">${btns}</div></div><table class="details-table"><thead><tr><th>科目</th><th class="text-right">借</th><th class="text-right">貸</th></tr></thead><tbody>${detail}</tbody></table></div>`;
+        }).join('');
+      }
+
+      function deleteInv(id) { if(confirm('確定要移至垃圾桶嗎？')) { google.script.run.withSuccessHandler(()=>{ showMsg('已移至垃圾桶', 'red'); loadInvoices(); }).deleteInvoice(id); } }
+      function restoreInv(id) { google.script.run.withSuccessHandler(()=>{ showMsg('發票已還原！', 'green'); loadTrash(); }).restoreInvoice(id); }
+      function hardDeleteInv(id) { if(confirm('警告：永久刪除後無法復原！確定要刪除嗎？')) { google.script.run.withSuccessHandler(()=>{ showMsg('已永久刪除', 'red'); loadTrash(); }).hardDeleteInvoice(id); } }
+
+      // --- Excel 下載功能 ---
+      function downloadInvoiceExcel() {
+        const s = document.getElementById('searchStart').value;
+        const e = document.getElementById('searchEnd').value;
+        const btn = document.getElementById('btnDlInv');
+        btn.disabled = true; btn.innerText = '處理中...';
+        
+        google.script.run.withSuccessHandler(url => {
+          window.open(url, '_blank');
+          btn.disabled = false; btn.innerText = '📥 下載 Excel';
+        }).withFailureHandler(err => {
+          alert('下載失敗：' + err.message);
+          btn.disabled = false; btn.innerText = '📥 下載 Excel';
+        }).exportInvoiceExcel(s, e);
+      }
+
+      function downloadReportExcel() {
+        const mode = document.querySelector('input[name="reportMode"]:checked').value;
+        let y, m = null;
+        if (mode === 'year') { y = document.getElementById('selYear').value; } 
+        else { const val = document.getElementById('selMonth').value; if(!val) { alert('請選擇月份'); return; } const parts = val.split('-'); y = parts[0]; m = parts[1]; }
+        
+        const btn = document.getElementById('btnDlRep');
+        btn.disabled = true; btn.innerText = '處理中...';
+
+        google.script.run.withSuccessHandler(url => {
+          window.open(url, '_blank');
+          btn.disabled = false; btn.innerText = '📥 下載 Excel';
+        }).withFailureHandler(err => {
+          alert('下載失敗：' + err.message);
+          btn.disabled = false; btn.innerText = '📥 下載 Excel';
+        }).exportReportExcel(Number(y), m ? Number(m) : null, mode);
+      }
+
+      function loadFinancials() {
+        const mode = document.querySelector('input[name="reportMode"]:checked').value;
+        const ids = ['incomeTable', 'equityTable', 'cfTable', 'balanceSheetTable'];
+        ids.forEach(id => document.querySelector(`#${id} tbody`).innerHTML='<tr><td>運算中...</td></tr>');
+        
+        let y, m = null;
+        if (mode === 'year') { y = document.getElementById('selYear').value; } 
+        else { const val = document.getElementById('selMonth').value; if(!val) return; const parts = val.split('-'); y = parts[0]; m = parts[1]; }
+
+        google.script.run.withSuccessHandler(res => {
+            const fmt = (n) => n.toLocaleString();
+            let inc = renderSec(res.income.revenue, '收入', res.income.totalRevenue) + renderSec(res.income.expense, '費用', res.income.totalExpense);
+            inc += `<tr class="total-row" style="background:#dcedc8"><td>本期淨利</td><td class="text-right">${fmt(res.income.netIncome)}</td></tr>`;
+            document.querySelector('#incomeTable tbody').innerHTML = inc;
+            
+            let eq = `<tr><td>以前年度/月累積盈餘</td><td class="text-right">${fmt(res.equity.retainedStart)}</td></tr><tr><td>加：本期淨利</td><td class="text-right">${fmt(res.equity.netIncome)}</td></tr><tr><td>加：股本餘額</td><td class="text-right">${fmt(res.equity.capital)}</td></tr><tr class="total-row"><td>期末權益總額</td><td class="text-right">${fmt(res.equity.total)}</td></tr>`;
+            document.querySelector('#equityTable tbody').innerHTML = eq;
+
+            let cf = `<tr class="subtotal-row"><td colspan="2">營業活動</td></tr>` +
+                     `<tr><td class="indent">本期淨利</td><td class="text-right">${fmt(res.cashFlow.operating.netIncome)}</td></tr>` +
+                     `<tr><td class="indent">加：折舊與攤提</td><td class="text-right">${fmt(res.cashFlow.operating.depreciation)}</td></tr>` +
+                     `<tr><td class="indent">營運資產變動</td><td class="text-right">${fmt(res.cashFlow.operating.wcAsset)}</td></tr>` +
+                     `<tr><td class="indent">營運負債變動</td><td class="text-right">${fmt(res.cashFlow.operating.wcLiability)}</td></tr>` +
+                     `<tr class="total-row"><td>營業活動淨現金流</td><td class="text-right">${fmt(res.cashFlow.operating.total)}</td></tr>`;
+            
+            cf += `<tr class="subtotal-row"><td colspan="2">投資活動</td></tr>`;
+            res.cashFlow.investing.details.forEach(i => cf += `<tr><td class="indent-2">${i.name}</td><td class="text-right">${fmt(i.balance)}</td></tr>`);
+            cf += `<tr class="total-row"><td>投資活動淨現金流</td><td class="text-right">${fmt(res.cashFlow.investing.total)}</td></tr>`;
+
+            cf += `<tr class="subtotal-row"><td colspan="2">籌資活動</td></tr>`;
+            res.cashFlow.financing.details.forEach(i => cf += `<tr><td class="indent-2">${i.name}</td><td class="text-right">${fmt(i.balance)}</td></tr>`);
+            cf += `<tr class="total-row"><td>籌資活動淨現金流</td><td class="text-right">${fmt(res.cashFlow.financing.total)}</td></tr>`;
+
+            cf += `<tr class="total-row" style="background:#fff9c4"><td>本期現金淨變動</td><td class="text-right">${fmt(res.cashFlow.netChange)}</td></tr>`;
+            document.querySelector('#cfTable tbody').innerHTML = cf;
+
+            let bal = renderSec(res.balance.assets, '資產', res.balance.totalAssets) + renderSec(res.balance.liabilities, '負債', res.balance.totalLiabilities) + renderSec(res.balance.equity, '權益', res.balance.totalEquity);
+            const chk = Math.abs(res.balance.totalAssets - (res.balance.totalLiabilities + res.balance.totalEquity)) < 0.01;
+            bal += `<tr class="total-row" style="color:${chk?'green':'red'}"><td colspan="2" align="center">資產 = 負債+權益 ${chk?'(平衡)':'(不平衡)'}</td></tr>`;
+            document.querySelector('#balanceSheetTable tbody').innerHTML = bal;
+        }).withFailureHandler(err => { alert("報表錯誤：\n" + err.message); }).getFinancialReports(Number(y), m ? Number(m) : null);
+      }
+      function renderSec(arr, t, tot) {
+        let h = `<tr class="subtotal-row"><td colspan="2">${t}</td></tr>`;
+        h += arr.map(i=>`<tr><td class="indent">${i.name}</td><td class="text-right">${i.balance.toLocaleString()}</td></tr>`).join('');
+        h += `<tr class="total-row"><td>小計</td><td class="text-right">${tot.toLocaleString()}</td></tr>`;
+        return h;
+      }
+    </script>
+  </body>
+</html>
